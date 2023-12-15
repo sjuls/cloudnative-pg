@@ -119,11 +119,11 @@ func getBarmanCloudVersion(command string) (*semver.Version, error) {
 func CurrentCapabilities() (*Capabilities, error) {
 	if capabilities == nil {
 		var err error
-		version, err := getBarmanCloudVersion(BarmanCloudWalArchive)
+		version, err := semver.Parse("3.9.0") // Hardcode to avoid overhead of detecting the version
 		if err != nil {
 			return nil, err
 		}
-		capabilities = detect(version)
+		capabilities = detect(&version)
 	}
 
 	return capabilities, nil
