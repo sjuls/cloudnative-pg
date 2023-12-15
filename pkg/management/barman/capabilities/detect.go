@@ -32,19 +32,13 @@ var capabilities *Capabilities
 // Detect barman-cloud executables presence and store the Capabilities
 // of the barman-cloud version it finds
 func Detect() (*Capabilities, error) {
-	version, err := getBarmanCloudVersion(BarmanCloudWalArchive)
+	version, err := semver.Parse("3.9.0")
 	if err != nil {
 		return nil, err
 	}
 
 	newCapabilities := new(Capabilities)
-
-	if version == nil {
-		log.Info("Missing Barman Cloud installation in the operand image")
-		return newCapabilities, nil
-	}
-
-	newCapabilities.Version = version
+	newCapabilities.Version = &version
 
 	switch {
 	case version.GE(semver.Version{Major: 3, Minor: 4}):
