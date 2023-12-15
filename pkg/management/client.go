@@ -48,7 +48,7 @@ var (
 
 	// readinessCheckRetry is used to wait until the API server is reachable
 	readinessCheckRetry = wait.Backoff{
-		Steps:    5,
+		Steps:    10,
 		Duration: 10 * time.Millisecond,
 		Factor:   5.0,
 		Jitter:   0.1,
