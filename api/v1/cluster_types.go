@@ -3318,6 +3318,20 @@ func (cluster *Cluster) GetEnableSuperuserAccess() bool {
 	return false
 }
 
+func (cluster *Cluster) IsEnforceConsistencyEnabled() bool {
+	enforceSyncReplicasAnnotation, ok := cluster.Annotations[utils.EnforceConsistencyAnnotationName]
+	if !ok {
+		return false
+	}
+
+	enforceSyncReplicas, err := strconv.ParseBool(enforceSyncReplicasAnnotation)
+	if err != nil {
+		return false
+	}
+
+	return enforceSyncReplicas
+}
+
 // LogTimestampsWithMessage prints useful information about timestamps in stdout
 func (cluster *Cluster) LogTimestampsWithMessage(ctx context.Context, logMessage string) {
 	contextLogger := log.FromContext(ctx)

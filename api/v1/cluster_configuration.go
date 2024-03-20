@@ -22,8 +22,8 @@ import (
 )
 
 // GetSyncReplicasData computes the actual number of required synchronous replicas and the names of
-// the electable sync replicas given the requested min, max, the number of ready replicas in the cluster and the sync
-// replicas constraints (if any)
+// the electable sync replicas given the requested min, max, the number of ready replicas in the cluster, the sync
+// replicas constraints (if any), and whether sync replicas are enforced.
 func (cluster *Cluster) GetSyncReplicasData() (syncReplicas int, electableSyncReplicas []string) {
 	// We start with the number of healthy replicas (healthy pods minus one)
 	// and verify it is greater than 0 and between minSyncReplicas and maxSyncReplicas.
@@ -44,10 +44,10 @@ func (cluster *Cluster) GetSyncReplicasData() (syncReplicas int, electableSyncRe
 		syncReplicas = cluster.Spec.MinSyncReplicas
 	}
 
-	// Lower to ready replicas if min sync replicas is too high
+	// Lower to ready replicas if min sync replicas is too high and consistency is not enforced
 	// (this is a self-healing procedure that prevents from a
 	// temporarily unresponsive system)
-	if readyReplicas < cluster.Spec.MinSyncReplicas {
+	if readyReplicas < cluster.Spec.MinSyncReplicas && !cluster.IsEnforceConsistencyEnabled() {
 		syncReplicas = readyReplicas
 		log.Warning("Ignore minSyncReplicas to enforce self-healing",
 			"syncReplicas", readyReplicas,
@@ -57,7 +57,7 @@ func (cluster *Cluster) GetSyncReplicasData() (syncReplicas int, electableSyncRe
 
 	electableSyncReplicas = cluster.getElectableSyncReplicas()
 	numberOfElectableSyncReplicas := len(electableSyncReplicas)
-	if numberOfElectableSyncReplicas < syncReplicas {
+	if numberOfElectableSyncReplicas < syncReplicas && !cluster.IsEnforceConsistencyEnabled() {
 		log.Warning("lowering sync replicas due to not enough electable instances for sync replication "+
 			"given the constraints",
 			"electableSyncReplicasWithoutConstraints", syncReplicas,
@@ -72,9 +72,20 @@ func (cluster *Cluster) GetSyncReplicasData() (syncReplicas int, electableSyncRe
 // getElectableSyncReplicas computes the names of the instances that can be elected to sync replicas
 func (cluster *Cluster) getElectableSyncReplicas() []string {
 	var nonPrimaryInstances []string
-	for _, instance := range cluster.Status.InstancesStatus[utils.PodHealthy] {
-		if cluster.Status.CurrentPrimary != instance {
-			nonPrimaryInstances = append(nonPrimaryInstances, instance)
+
+	// If consistency is not enforced, only healthy replicas are electable
+	if !cluster.IsEnforceConsistencyEnabled() {
+		for _, instance := range cluster.Status.InstancesStatus[utils.PodHealthy] {
+			if cluster.Status.CurrentPrimary != instance {
+				nonPrimaryInstances = append(nonPrimaryInstances, instance)
+			}
+		}
+	} else {
+		// If consistency is enforced, all replicas are electable regardless of their current health
+		for _, instance := range cluster.Status.InstanceNames {
+			if cluster.Status.CurrentPrimary != instance {
+				nonPrimaryInstances = append(nonPrimaryInstances, instance)
+			}
 		}
 	}
 
