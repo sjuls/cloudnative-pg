@@ -366,6 +366,7 @@ func (r *ClusterReconciler) handleSwitchover(
 			" we won't trigger a switchover")
 		return nil, nil
 	}
+
 	if cluster.Status.Phase == apiv1.PhaseInplaceDeletePrimaryRestart {
 		if cluster.Status.ReadyInstances != cluster.Spec.Instances {
 			contextLogger.Info("Waiting for the primary to be restarted without triggering a switchover")
@@ -378,6 +379,13 @@ func (r *ClusterReconciler) handleSwitchover(
 			return nil, err
 		}
 		return nil, nil
+	}
+
+	if cluster.IsEnforceConsistencyEnabled() {
+		if cluster.Status.ReadyInstances < cluster.Spec.Instances-cluster.Spec.MinSyncReplicas {
+			contextLogger.Info("Waiting for (n - minSyncReplicas) instances to be ready before triggering a switchover to ensure consistency")
+			return nil, nil
+		}
 	}
 
 	// Update the target primary name from the Pods status.

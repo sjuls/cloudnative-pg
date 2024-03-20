@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -3088,6 +3089,20 @@ func (cluster *Cluster) GetEnableSuperuserAccess() bool {
 	}
 
 	return true
+}
+
+func (cluster *Cluster) IsEnforceConsistencyEnabled() bool {
+	enforceSyncReplicasAnnotation, ok := cluster.Annotations[utils.EnforceConsistencyAnnotationName]
+	if !ok {
+		return false
+	}
+
+	enforceSyncReplicas, err := strconv.ParseBool(enforceSyncReplicasAnnotation)
+	if err != nil {
+		return false
+	}
+
+	return enforceSyncReplicas
 }
 
 // LogTimestampsWithMessage prints useful information about timestamps in stdout
