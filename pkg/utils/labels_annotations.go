@@ -202,6 +202,9 @@ const (
 	// ClusterRestartAnnotationName is the name of the annotation containing the
 	// latest required restart time
 	ClusterRestartAnnotationName = "kubectl.kubernetes.io/restartedAt"
+
+	// EnforceConsistencyAnnotationName is the name of the annotation marking a cluster to enforce sync replicas over self-healing
+	EnforceConsistencyAnnotationName = MetadataNamespace + "/enforceConsistency"
 )
 
 type annotationStatus string
