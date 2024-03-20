@@ -187,6 +187,9 @@ type Instance struct {
 	// mightBeUnavailable specifies whether we expect the instance to be down
 	mightBeUnavailable atomic.Bool
 
+	// walReceiverBootstrapped specifies whether the wal receiver has been seen active
+	walReceiverBootstrapped atomic.Bool
+
 	// fenced specifies whether fencing is on for the instance
 	// fenced entails mightBeUnavailable ( entails as in logical consequence)
 	fenced atomic.Bool

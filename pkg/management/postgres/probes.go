@@ -60,6 +60,24 @@ func (instance *Instance) IsServerReady() error {
 		return err
 	}
 
+	isPrimary, err := instance.IsPrimary()
+	if err != nil {
+		return err
+	}
+
+	if !isPrimary && !instance.walReceiverBootstrapped.Load() {
+		walReceiverActive, err := instance.IsWALReceiverActive()
+		if err != nil {
+			return err
+		}
+
+		if !walReceiverActive {
+			return fmt.Errorf("instance wal receiver is not active yet")
+		}
+
+		instance.walReceiverBootstrapped.Store(walReceiverActive)
+	}
+
 	return superUserDB.Ping()
 }
 
